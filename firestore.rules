@@ -1,0 +1,376 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- GLOBAL HARDENED HELPERS ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidSound(s) {
+      return s in [
+        'motorcycle', 'sportbike', 'turbo', 'v8',
+        'pops_bangs', 'rev_limiter', 'rocket', 'siren_scream', 'drag_launch'
+      ];
+    }
+
+    function isValidThemeKey(k) {
+      return k in ['emerald', 'crimson', 'titanium', 'amber', 'violet'];
+    }
+
+    function isValidChatThemeKey(k) {
+      return k in ['classic_wa', 'turbo_fire', 'carbon_gold', 'neon_night'];
+    }
+
+    function isValidSubscriptionPlan(p) {
+      return p in ['trial', '1_month', '2_months', '3_months', '12_months'];
+    }
+
+    function isValidWaybillStatus(s) {
+      return s in ['pending', 'shipped', 'delivered'];
+    }
+
+    function isValidCustomerSubStatus(s) {
+      return s in ['active', 'expiring_soon', 'expired', 'paused'];
+    }
+
+    function isValidSmsTriggerType(t) {
+      return t in ['auto_expiry', 'manual_owner', 'ai_drafted'];
+    }
+
+    function isValidSmsDeliveryStatus(d) {
+      return d in ['queued_auto', 'dispatched_sms_intent', 'logged_in_chat'];
+    }
+
+    // --- VALIDATION BLUEPRINTS ---
+    function isValidStoreSettings(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.storeName is string && data.storeName.size() >= 1 && data.storeName.size() <= 80 &&
+             data.verifiedBadge is bool &&
+             data.tagline is string && data.tagline.size() >= 1 && data.tagline.size() <= 140 &&
+             data.themeColorKey is string && isValidThemeKey(data.themeColorKey) &&
+             data.instagramHandle is string && data.instagramHandle.size() <= 80 &&
+             data.tiktokHandle is string && data.tiktokHandle.size() <= 80 &&
+             data.appDownloadUrl is string && data.appDownloadUrl.size() <= 300 &&
+             data.defaultShippingCompany is string && data.defaultShippingCompany.size() <= 80 &&
+             data.defaultEstimatedDays is int && data.defaultEstimatedDays >= 0 && data.defaultEstimatedDays <= 90 &&
+             data.activeWallpaperIndex is int && data.activeWallpaperIndex >= 0 && data.activeWallpaperIndex <= 10 &&
+             data.selectedAlertSound is string && isValidSound(data.selectedAlertSound) &&
+             (!('customAppNameUnderBadge' in data) || (data.customAppNameUnderBadge is string && data.customAppNameUnderBadge.size() <= 80)) &&
+             (!('websiteUrl' in data) || (data.websiteUrl is string && data.websiteUrl.size() <= 300)) &&
+             (!('subscriptionPlan' in data) || (data.subscriptionPlan is string && isValidSubscriptionPlan(data.subscriptionPlan))) &&
+             (!('subscriptionActive' in data) || data.subscriptionActive is bool) &&
+             (!('subscriptionDaysLeft' in data) || (data.subscriptionDaysLeft is int && data.subscriptionDaysLeft >= 0 && data.subscriptionDaysLeft <= 366)) &&
+             (!('subscriptionSmsCode' in data) || (data.subscriptionSmsCode is string && data.subscriptionSmsCode.size() <= 32)) &&
+             (!('customerPhoneForSms' in data) || (data.customerPhoneForSms is string && data.customerPhoneForSms.size() <= 40)) &&
+             (!('chatThemeKey' in data) || (data.chatThemeKey is string && isValidChatThemeKey(data.chatThemeKey)));
+    }
+
+    function isValidCatalogProduct(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+             data.description is string && data.description.size() <= 1000 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+             (data.priceSar is int || data.priceSar is float) && data.priceSar >= 0 && data.priceSar <= 1000000 &&
+             data.imageKey is string && data.imageKey.size() >= 1 && data.imageKey.size() <= 80 &&
+             (!('videoTitle' in data) || (data.videoTitle is string && data.videoTitle.size() <= 120)) &&
+             (!('videoDurationSec' in data) || (data.videoDurationSec is int && data.videoDurationSec >= 0 && data.videoDurationSec <= 3600)) &&
+             data.seoKeywords is list && data.seoKeywords.size() <= 15 &&
+             (data.seoKeywords.size() == 0 || data.seoKeywords[0] is string) &&
+             data.inStock is bool;
+    }
+
+    function isValidChatConversation(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 80 &&
+             data.customerPhone is string && data.customerPhone.size() <= 40 &&
+             data.lastMessage is string && data.lastMessage.size() <= 500 &&
+             data.isInternetBlocked is bool &&
+             data.alertSound is string && isValidSound(data.alertSound) &&
+             data.wallpaperIndex is int && data.wallpaperIndex >= 0 && data.wallpaperIndex <= 10 &&
+             data.shippingCustomerName is string && data.shippingCustomerName.size() <= 80 &&
+             data.shippingAddress is string && data.shippingAddress.size() <= 200 &&
+             data.shippingRegion is string && data.shippingRegion.size() <= 80 &&
+             data.shippingCompany is string && data.shippingCompany.size() <= 80 &&
+             data.shippingDaysRemaining is int && data.shippingDaysRemaining >= 0 && data.shippingDaysRemaining <= 90 &&
+             data.waybillNumber is string && data.waybillNumber.size() <= 64 &&
+             data.waybillStatus is string && isValidWaybillStatus(data.waybillStatus) &&
+             (!('activeAdTitle' in data) || (data.activeAdTitle is string && data.activeAdTitle.size() <= 120)) &&
+             (!('activeAdSubtitle' in data) || (data.activeAdSubtitle is string && data.activeAdSubtitle.size() <= 300)) &&
+             (!('activeAdProductId' in data) || (data.activeAdProductId is string && data.activeAdProductId.size() <= 128)) &&
+             (!('chatThemeKey' in data) || (data.chatThemeKey is string && isValidChatThemeKey(data.chatThemeKey)));
+    }
+
+    function isValidChatMessage(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.chatId is string && isValidId(data.chatId) &&
+             data.senderRole is string && data.senderRole in ['owner', 'customer', 'ai', 'system'] &&
+             data.messageType is string && data.messageType in ['text', 'ad', 'waybill', 'sound_alert', 'call_log', 'product', 'sms_code'] &&
+             data.text is string && data.text.size() >= 1 && data.text.size() <= 4000 &&
+             (!('soundType' in data) || (data.soundType is string && data.soundType.size() <= 40)) &&
+             (!('productId' in data) || (data.productId is string && data.productId.size() <= 128)) &&
+             (!('adTitle' in data) || (data.adTitle is string && data.adTitle.size() <= 120));
+    }
+
+    function isValidCustomerSubscription(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 80 &&
+             data.customerPhone is string && data.customerPhone.size() >= 3 && data.customerPhone.size() <= 40 &&
+             (!('chatId' in data) || (data.chatId is string && data.chatId.size() <= 128)) &&
+             data.planKey is string && isValidSubscriptionPlan(data.planKey) &&
+             data.planLabelAr is string && data.planLabelAr.size() >= 1 && data.planLabelAr.size() <= 80 &&
+             (data.priceSar is int || data.priceSar is float) && data.priceSar >= 0 && data.priceSar <= 100000 &&
+             data.remainingDays is int && data.remainingDays >= 0 && data.remainingDays <= 366 &&
+             data.alertThresholdDays is int && data.alertThresholdDays >= 1 && data.alertThresholdDays <= 30 &&
+             data.status is string && isValidCustomerSubStatus(data.status) &&
+             data.autoSmsAlertEnabled is bool &&
+             (!('lastSmsAlertText' in data) || (data.lastSmsAlertText is string && data.lastSmsAlertText.size() <= 500)) &&
+             data.smsAlertCount is int && data.smsAlertCount >= 0 && data.smsAlertCount <= 10000 &&
+             (!('lastAlertSentAt' in data) || data.lastAlertSentAt == null || data.lastAlertSentAt is timestamp);
+    }
+
+    function isValidSmsAlertLog(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.subscriptionId is string && isValidId(data.subscriptionId) &&
+             data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 80 &&
+             data.customerPhone is string && data.customerPhone.size() >= 3 && data.customerPhone.size() <= 40 &&
+             data.messageBody is string && data.messageBody.size() >= 1 && data.messageBody.size() <= 500 &&
+             data.triggerType is string && isValidSmsTriggerType(data.triggerType) &&
+             data.remainingDaysAtSend is int && data.remainingDaysAtSend >= 0 && data.remainingDaysAtSend <= 366 &&
+             data.deliveryStatus is string && isValidSmsDeliveryStatus(data.deliveryStatus);
+    }
+
+    // --- COLLECTIONS ---
+    match /users/{userId}/store_settings/{settingId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(settingId);
+      allow create: if isOwner(userId) &&
+                       isValidId(settingId) &&
+                       incoming().userId == userId &&
+                       incoming().keys().hasAll([
+                         'userId', 'storeName', 'verifiedBadge', 'tagline', 'themeColorKey',
+                         'instagramHandle', 'tiktokHandle', 'appDownloadUrl',
+                         'defaultShippingCompany', 'defaultEstimatedDays',
+                         'activeWallpaperIndex', 'selectedAlertSound', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'storeName', 'verifiedBadge', 'tagline', 'themeColorKey',
+                         'instagramHandle', 'tiktokHandle', 'appDownloadUrl',
+                         'defaultShippingCompany', 'defaultEstimatedDays',
+                         'activeWallpaperIndex', 'selectedAlertSound',
+                         'customAppNameUnderBadge', 'websiteUrl', 'subscriptionPlan',
+                         'subscriptionActive', 'subscriptionDaysLeft', 'subscriptionSmsCode',
+                         'customerPhoneForSms', 'chatThemeKey',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       isValidStoreSettings(incoming());
+      allow update: if isOwner(userId) &&
+                       isValidId(settingId) &&
+                       isValidStoreSettings(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'storeName', 'verifiedBadge', 'tagline', 'themeColorKey',
+                         'instagramHandle', 'tiktokHandle', 'appDownloadUrl',
+                         'defaultShippingCompany', 'defaultEstimatedDays',
+                         'activeWallpaperIndex', 'selectedAlertSound',
+                         'customAppNameUnderBadge', 'websiteUrl', 'subscriptionPlan',
+                         'subscriptionActive', 'subscriptionDaysLeft', 'subscriptionSmsCode',
+                         'customerPhoneForSms', 'chatThemeKey',
+                         'updatedAt'
+                       ]);
+      allow delete: if isOwner(userId) && isValidId(settingId);
+    }
+
+    match /users/{userId}/products/{productId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(productId);
+      allow create: if isOwner(userId) &&
+                       isValidId(productId) &&
+                       incoming().userId == userId &&
+                       incoming().keys().hasAll([
+                         'userId', 'name', 'description', 'category', 'priceSar',
+                         'imageKey', 'seoKeywords', 'inStock', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'name', 'description', 'category', 'priceSar',
+                         'imageKey', 'videoTitle', 'videoDurationSec',
+                         'seoKeywords', 'inStock', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       isValidCatalogProduct(incoming());
+      allow update: if isOwner(userId) &&
+                       isValidId(productId) &&
+                       isValidCatalogProduct(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'description', 'category', 'priceSar',
+                         'imageKey', 'videoTitle', 'videoDurationSec',
+                         'seoKeywords', 'inStock', 'updatedAt'
+                       ]);
+      allow delete: if isOwner(userId) && isValidId(productId);
+    }
+
+    match /users/{userId}/chats/{chatId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(chatId);
+      allow create: if isOwner(userId) &&
+                       isValidId(chatId) &&
+                       incoming().userId == userId &&
+                       incoming().keys().hasAll([
+                         'userId', 'customerName', 'customerPhone', 'lastMessage',
+                         'isInternetBlocked', 'alertSound', 'wallpaperIndex',
+                         'shippingCustomerName', 'shippingAddress', 'shippingRegion',
+                         'shippingCompany', 'shippingDaysRemaining', 'waybillNumber',
+                         'waybillStatus', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'customerName', 'customerPhone', 'lastMessage',
+                         'isInternetBlocked', 'alertSound', 'wallpaperIndex',
+                         'shippingCustomerName', 'shippingAddress', 'shippingRegion',
+                         'shippingCompany', 'shippingDaysRemaining', 'waybillNumber',
+                         'waybillStatus', 'activeAdTitle', 'activeAdSubtitle',
+                         'activeAdProductId', 'chatThemeKey', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       isValidChatConversation(incoming());
+      allow update: if isOwner(userId) &&
+                       isValidId(chatId) &&
+                       isValidChatConversation(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       (
+                         incoming().diff(existing()).affectedKeys().hasOnly(['isInternetBlocked', 'updatedAt']) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'shippingCustomerName', 'shippingAddress', 'shippingRegion',
+                           'shippingCompany', 'shippingDaysRemaining', 'waybillNumber',
+                           'waybillStatus', 'updatedAt'
+                         ]) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'activeAdTitle', 'activeAdSubtitle', 'activeAdProductId', 'updatedAt'
+                         ]) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly(['alertSound', 'wallpaperIndex', 'chatThemeKey', 'updatedAt']) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly(['alertSound', 'wallpaperIndex', 'updatedAt']) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly(['chatThemeKey', 'updatedAt']) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly(['lastMessage', 'updatedAt']) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'customerName', 'customerPhone', 'lastMessage',
+                           'isInternetBlocked', 'alertSound', 'wallpaperIndex',
+                           'shippingCustomerName', 'shippingAddress', 'shippingRegion',
+                           'shippingCompany', 'shippingDaysRemaining', 'waybillNumber',
+                           'waybillStatus', 'activeAdTitle', 'activeAdSubtitle',
+                           'activeAdProductId', 'chatThemeKey', 'updatedAt'
+                         ])
+                       );
+      allow delete: if isOwner(userId) && isValidId(chatId);
+
+      match /messages/{messageId} {
+        allow list: if isOwner(userId);
+        allow get: if isOwner(userId) && isValidId(messageId);
+        allow create: if isOwner(userId) &&
+                         isValidId(chatId) &&
+                         isValidId(messageId) &&
+                         incoming().userId == userId &&
+                         incoming().chatId == chatId &&
+                         incoming().keys().hasAll([
+                           'userId', 'chatId', 'senderRole', 'messageType', 'text', 'createdAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'chatId', 'senderRole', 'messageType', 'text',
+                           'soundType', 'productId', 'adTitle', 'createdAt'
+                         ]) &&
+                         incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                         isValidChatMessage(incoming()) &&
+                         exists(/databases/$(database)/documents/users/$(userId)/chats/$(chatId));
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(messageId);
+      }
+    }
+
+    match /users/{userId}/customer_subscriptions/{subId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(subId);
+      allow create: if isOwner(userId) &&
+                       isValidId(subId) &&
+                       incoming().userId == userId &&
+                       incoming().keys().hasAll([
+                         'userId', 'customerName', 'customerPhone', 'planKey', 'planLabelAr',
+                         'priceSar', 'remainingDays', 'alertThresholdDays', 'status',
+                         'autoSmsAlertEnabled', 'smsAlertCount', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'customerName', 'customerPhone', 'chatId', 'planKey', 'planLabelAr',
+                         'priceSar', 'remainingDays', 'alertThresholdDays', 'status',
+                         'autoSmsAlertEnabled', 'lastSmsAlertText', 'smsAlertCount',
+                         'lastAlertSentAt', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       isValidCustomerSubscription(incoming());
+      allow update: if isOwner(userId) &&
+                       isValidId(subId) &&
+                       isValidCustomerSubscription(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'customerName', 'customerPhone', 'chatId', 'planKey', 'planLabelAr',
+                         'priceSar', 'remainingDays', 'alertThresholdDays', 'status',
+                         'autoSmsAlertEnabled', 'lastSmsAlertText', 'smsAlertCount',
+                         'lastAlertSentAt', 'updatedAt'
+                       ]);
+      allow delete: if isOwner(userId) && isValidId(subId);
+    }
+
+    match /users/{userId}/sms_alert_logs/{logId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(logId);
+      allow create: if isOwner(userId) &&
+                       isValidId(logId) &&
+                       incoming().userId == userId &&
+                       incoming().keys().hasAll([
+                         'userId', 'subscriptionId', 'customerName', 'customerPhone',
+                         'messageBody', 'triggerType', 'remainingDaysAtSend',
+                         'deliveryStatus', 'createdAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'subscriptionId', 'customerName', 'customerPhone',
+                         'messageBody', 'triggerType', 'remainingDaysAtSend',
+                         'deliveryStatus', 'createdAt'
+                       ]) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       isValidSmsAlertLog(incoming());
+      allow update: if false;
+      allow delete: if isOwner(userId) && isValidId(logId);
+    }
+  }
+}

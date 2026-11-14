@@ -1,0 +1,534 @@
+{
+  "entities": {
+    "StoreSettings": {
+      "title": "StoreSettings",
+      "description": "Configuration for the WhatsApp-style exhaust and catalytic converter business store.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner UID matching request.auth.uid."
+        },
+        "storeName": {
+          "type": "string",
+          "description": "Display name of the store."
+        },
+        "verifiedBadge": {
+          "type": "boolean",
+          "description": "Whether the verified blue checkmark is enabled."
+        },
+        "tagline": {
+          "type": "string",
+          "description": "Subtitle shown under the verified store badge."
+        },
+        "customAppNameUnderBadge": {
+          "type": "string",
+          "description": "Customizable app name displayed under the verified blue checkmark."
+        },
+        "websiteUrl": {
+          "type": "string",
+          "description": "Store website link displayed and editable under subscription."
+        },
+        "themeColorKey": {
+          "type": "string",
+          "enum": ["emerald", "crimson", "titanium", "amber", "violet"],
+          "description": "Selected app color theme key."
+        },
+        "chatThemeKey": {
+          "type": "string",
+          "enum": ["classic_wa", "turbo_fire", "carbon_gold", "neon_night"],
+          "description": "Selected in-chat visual theme preset."
+        },
+        "instagramHandle": {
+          "type": "string",
+          "description": "Store Instagram handle shown in the top ticker."
+        },
+        "tiktokHandle": {
+          "type": "string",
+          "description": "Store TikTok handle shown in the top ticker."
+        },
+        "appDownloadUrl": {
+          "type": "string",
+          "description": "Download and share URL for the dedicated store app."
+        },
+        "defaultShippingCompany": {
+          "type": "string",
+          "description": "Default shipping carrier configured by the store owner."
+        },
+        "defaultEstimatedDays": {
+          "type": "integer",
+          "description": "Default remaining days for delivery."
+        },
+        "activeWallpaperIndex": {
+          "type": "integer",
+          "description": "Selected animated wallpaper preset index."
+        },
+        "selectedAlertSound": {
+          "type": "string",
+          "enum": [
+            "motorcycle", "sportbike", "turbo", "v8",
+            "pops_bangs", "rev_limiter", "rocket", "siren_scream", "drag_launch"
+          ],
+          "description": "Default engine/exhaust alert sound for chats."
+        },
+        "subscriptionPlan": {
+          "type": "string",
+          "enum": ["trial", "1_month", "2_months", "3_months", "12_months"],
+          "description": "Active subscription tier (5-day trial free, 25 SAR/month paid plans)."
+        },
+        "subscriptionActive": {
+          "type": "boolean",
+          "description": "Whether the store subscription is currently active."
+        },
+        "subscriptionDaysLeft": {
+          "type": "integer",
+          "description": "Remaining days in the active trial or paid subscription."
+        },
+        "subscriptionSmsCode": {
+          "type": "string",
+          "description": "Activation code generated and sent via SMS upon payment."
+        },
+        "customerPhoneForSms": {
+          "type": "string",
+          "description": "Customer phone number receiving the activation SMS code."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "storeName",
+        "verifiedBadge",
+        "tagline",
+        "themeColorKey",
+        "instagramHandle",
+        "tiktokHandle",
+        "appDownloadUrl",
+        "defaultShippingCompany",
+        "defaultEstimatedDays",
+        "activeWallpaperIndex",
+        "selectedAlertSound",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CatalogProduct": {
+      "title": "CatalogProduct",
+      "description": "Exhaust system, catalytic converter, or video product entry with Google SEO keywords.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner UID."
+        },
+        "name": {
+          "type": "string",
+          "description": "Product name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed product specifications."
+        },
+        "category": {
+          "type": "string",
+          "description": "Catalog category including exhausts, catalytic converters, turbo, and videos."
+        },
+        "priceSar": {
+          "type": "number",
+          "description": "Price in Saudi Riyals."
+        },
+        "imageKey": {
+          "type": "string",
+          "description": "Drawable resource key for product preview."
+        },
+        "videoTitle": {
+          "type": "string",
+          "description": "Optional video clip title for video category items."
+        },
+        "videoDurationSec": {
+          "type": "integer",
+          "description": "Video clip duration in seconds."
+        },
+        "seoKeywords": {
+          "type": "array",
+          "description": "Google Search SEO keywords for product discoverability."
+        },
+        "inStock": {
+          "type": "boolean",
+          "description": "Availability flag."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update."
+        }
+      },
+      "required": [
+        "userId",
+        "name",
+        "description",
+        "category",
+        "priceSar",
+        "imageKey",
+        "seoKeywords",
+        "inStock",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ChatConversation": {
+      "title": "ChatConversation",
+      "description": "Customer chat thread with internet-cutoff blocking, shipping waybill, in-chat ad, wallpaper, and engine alert sound.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner UID."
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Customer display name."
+        },
+        "customerPhone": {
+          "type": "string",
+          "description": "Customer phone or identifier."
+        },
+        "lastMessage": {
+          "type": "string",
+          "description": "Preview of the latest message."
+        },
+        "isInternetBlocked": {
+          "type": "boolean",
+          "description": "Blocks chat by cutting off internet connectivity for this thread."
+        },
+        "alertSound": {
+          "type": "string",
+          "enum": [
+            "motorcycle", "sportbike", "turbo", "v8",
+            "pops_bangs", "rev_limiter", "rocket", "siren_scream", "drag_launch"
+          ],
+          "description": "Alert sound assigned to this chat."
+        },
+        "wallpaperIndex": {
+          "type": "integer",
+          "description": "Animated wallpaper preset index for this chat."
+        },
+        "chatThemeKey": {
+          "type": "string",
+          "enum": ["classic_wa", "turbo_fire", "carbon_gold", "neon_night"],
+          "description": "In-chat visual theme preset."
+        },
+        "shippingCustomerName": {
+          "type": "string",
+          "description": "Customer name on the shipping waybill."
+        },
+        "shippingAddress": {
+          "type": "string",
+          "description": "Customer delivery address."
+        },
+        "shippingRegion": {
+          "type": "string",
+          "description": "Customer city/region."
+        },
+        "shippingCompany": {
+          "type": "string",
+          "description": "Shipping company assigned by store owner."
+        },
+        "shippingDaysRemaining": {
+          "type": "integer",
+          "description": "Remaining days for order delivery set by store owner."
+        },
+        "waybillNumber": {
+          "type": "string",
+          "description": "Shipping waybill tracking code."
+        },
+        "waybillStatus": {
+          "type": "string",
+          "enum": ["pending", "shipped", "delivered"],
+          "description": "Shipping waybill status."
+        },
+        "activeAdTitle": {
+          "type": "string",
+          "description": "Promotional ad title pinned in chat."
+        },
+        "activeAdSubtitle": {
+          "type": "string",
+          "description": "Promotional ad description pinned in chat."
+        },
+        "activeAdProductId": {
+          "type": "string",
+          "description": "Linked product ID for the pinned in-chat ad."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update."
+        }
+      },
+      "required": [
+        "userId",
+        "customerName",
+        "customerPhone",
+        "lastMessage",
+        "isInternetBlocked",
+        "alertSound",
+        "wallpaperIndex",
+        "shippingCustomerName",
+        "shippingAddress",
+        "shippingRegion",
+        "shippingCompany",
+        "shippingDaysRemaining",
+        "waybillNumber",
+        "waybillStatus",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Individual message inside a customer chat thread.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner UID."
+        },
+        "chatId": {
+          "type": "string",
+          "description": "Parent chat document ID."
+        },
+        "senderRole": {
+          "type": "string",
+          "enum": ["owner", "customer", "ai", "system"],
+          "description": "Role of the message sender."
+        },
+        "messageType": {
+          "type": "string",
+          "enum": ["text", "ad", "waybill", "sound_alert", "call_log", "product", "sms_code"],
+          "description": "Type of chat bubble."
+        },
+        "text": {
+          "type": "string",
+          "description": "Message body."
+        },
+        "soundType": {
+          "type": "string",
+          "description": "Optional engine alert sound type."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Optional linked catalog product ID."
+        },
+        "adTitle": {
+          "type": "string",
+          "description": "Optional ad headline."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation."
+        }
+      },
+      "required": [
+        "userId",
+        "chatId",
+        "senderRole",
+        "messageType",
+        "text",
+        "createdAt"
+      ]
+    },
+    "CustomerSubscription": {
+      "title": "CustomerSubscription",
+      "description": "Admin-managed customer subscription tracking plan, remaining duration, expiry status, and automatic SMS alert state.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Store owner UID matching request.auth.uid."
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Subscriber display name."
+        },
+        "customerPhone": {
+          "type": "string",
+          "description": "Subscriber mobile number for SMS expiry alerts."
+        },
+        "chatId": {
+          "type": "string",
+          "description": "Optional linked chat conversation ID."
+        },
+        "planKey": {
+          "type": "string",
+          "enum": ["trial", "1_month", "2_months", "3_months", "12_months"],
+          "description": "Subscription tier key."
+        },
+        "planLabelAr": {
+          "type": "string",
+          "description": "Arabic label of the subscription plan."
+        },
+        "priceSar": {
+          "type": "number",
+          "description": "Subscription amount in SAR."
+        },
+        "remainingDays": {
+          "type": "integer",
+          "description": "Remaining subscription days editable by the store owner."
+        },
+        "alertThresholdDays": {
+          "type": "integer",
+          "description": "Days-before-expiry threshold for triggering automatic SMS alerts."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "expiring_soon", "expired", "paused"],
+          "description": "Current subscription status."
+        },
+        "autoSmsAlertEnabled": {
+          "type": "boolean",
+          "description": "Whether automatic SMS expiry alerts are enabled for this subscriber."
+        },
+        "lastSmsAlertText": {
+          "type": "string",
+          "description": "Body of the most recent expiry SMS alert."
+        },
+        "smsAlertCount": {
+          "type": "integer",
+          "description": "Total number of SMS alerts triggered for this subscriber."
+        },
+        "lastAlertSentAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the most recent alert."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update."
+        }
+      },
+      "required": [
+        "userId",
+        "customerName",
+        "customerPhone",
+        "planKey",
+        "planLabelAr",
+        "priceSar",
+        "remainingDays",
+        "alertThresholdDays",
+        "status",
+        "autoSmsAlertEnabled",
+        "smsAlertCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SmsAlertLog": {
+      "title": "SmsAlertLog",
+      "description": "Immutable log of automatic and manual SMS expiry notifications sent to subscribers.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Store owner UID."
+        },
+        "subscriptionId": {
+          "type": "string",
+          "description": "Parent CustomerSubscription document ID."
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Subscriber name."
+        },
+        "customerPhone": {
+          "type": "string",
+          "description": "Subscriber mobile number."
+        },
+        "messageBody": {
+          "type": "string",
+          "description": "Short SMS text sent or queued."
+        },
+        "triggerType": {
+          "type": "string",
+          "enum": ["auto_expiry", "manual_owner", "ai_drafted"],
+          "description": "How the SMS alert was triggered."
+        },
+        "remainingDaysAtSend": {
+          "type": "integer",
+          "description": "Remaining days at the moment of the alert."
+        },
+        "deliveryStatus": {
+          "type": "string",
+          "enum": ["queued_auto", "dispatched_sms_intent", "logged_in_chat"],
+          "description": "Delivery state of the SMS notification."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation."
+        }
+      },
+      "required": [
+        "userId",
+        "subscriptionId",
+        "customerName",
+        "customerPhone",
+        "messageBody",
+        "triggerType",
+        "remainingDaysAtSend",
+        "deliveryStatus",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/store_settings/{settingId}": {
+      "schema": { "$ref": "#/entities/StoreSettings" },
+      "description": "Store branding, theme color, social handles, and default shipping settings."
+    },
+    "/users/{userId}/products/{productId}": {
+      "schema": { "$ref": "#/entities/CatalogProduct" },
+      "description": "Exhaust and catalytic converter catalog products with Google SEO keywords and video previews."
+    },
+    "/users/{userId}/chats/{chatId}": {
+      "schema": { "$ref": "#/entities/ChatConversation" },
+      "description": "WhatsApp-style customer conversations with internet-block toggle, waybill, and in-chat ads."
+    },
+    "/users/{userId}/chats/{chatId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Messages inside each chat conversation."
+    },
+    "/users/{userId}/customer_subscriptions/{subId}": {
+      "schema": { "$ref": "#/entities/CustomerSubscription" },
+      "description": "Admin-managed customer subscriptions with remaining duration and auto SMS alert controls."
+    },
+    "/users/{userId}/sms_alert_logs/{logId}": {
+      "schema": { "$ref": "#/entities/SmsAlertLog" },
+      "description": "Append-only audit log of SMS expiry alerts sent to customers."
+    }
+  }
+}
