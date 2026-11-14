@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>متجر واتساب للأعمال</title>
+<style>
+  body { margin:0; font-family: Tahoma, Arial, sans-serif; background:#0b141a; color:#e9edef; user-select: none; }
+  .header { background:#1f2c34; padding:12px 15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2a3942; }
+  .header h2 { margin:0; font-size:18px; color:#00a884; }
+  .marquee { background:#005c4b; color:#fff; padding:6px; font-size:13px; overflow:hidden; white-space:nowrap; }
+  .marquee span { display:inline-block; animation: scroll 15s linear infinite; }
+  @keyframes scroll { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  .card { background:#1f2c34; margin:15px; padding:15px; border-radius:12px; border:1px solid #2a3942; }
+  .row { display:flex; gap:8px; margin-bottom:10px; }
+  input, select, textarea { width:100%; padding:10px; border-radius:8px; border:1px solid #2a3942; background:#2a3942; color:#fff; font-size:14px; box-sizing:border-box; }
+  .btn { width:100%; padding:12px; border:none; border-radius:8px; font-weight:bold; font-size:15px; cursor:pointer; margin-top:6px; }
+  .btn-green { background:#00a884; color:#0b141a; }
+  .btn-dark { background:#2a3942; color:#00a884; border:1px solid #00a884; }
+  .btn-red { background:#ea4335; color:#fff; padding:6px 10px; font-size:12px; width:auto; }
+  .tabs { display:flex; background:#1f2c34; border-bottom:1px solid #2a3942; }
+  .tab { flex:1; text-align:center; padding:12px; cursor:pointer; color:#8696a0; font-weight:bold; }
+  .tab.active { color:#00a884; border-bottom:3px solid #00a884; }
+  .chat-box { height:320px; overflow-y:auto; padding:15px; background-size:cover; background-position:center; display:flex; flex-direction:column; gap:8px; }
+  .msg { max-width:80%; padding:10px; border-radius:10px; font-size:14px; position:relative; }
+  .msg-in { background:#202c33; align-self:flex-start; }
+  .msg-out { background:#005c4b; align-self:flex-end; }
+  .hidden { display:none; }
+  .sound-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+  .badge { background:#00a884; color:#000; padding:2px 6px; border-radius:4px; font-size:11px; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="header"><h2 id="storeTitleLogin">عوادم التيربو</h2><span class="badge">واتساب للأعمال</span></div>
+  <div class="card" style="text-align:center;">
+    <p style="color:#8696a0; font-size:13px;">منصة واتساب للأعمال الخاصة بمتجرك: كتالوج المنتجات، دردشة مباشرة مع المتجر، وبوليصة شحن معتمدة.</p>
+    <div class="row">
+      <input type="tel" id="phoneInput" placeholder="رقم الجوال (+966)" style="flex:2;">
+      <input type="password" id="pinInput" maxlength="4" placeholder="الرمز السري (4 أرقام)" style="flex:1;">
+    </div>
+    <button class="btn btn-green" onclick="loginUser()">دخول المالك / المشترك</button>
+    <hr style="border-color:#2a3942; margin:15px 0;">
+    <button class="btn btn-dark" onclick="enterAsClient()">تصفح المتجر كعميل</button>
+  </div>
+</div>
+
+<div id="mainApp" class="hidden">
+  <div class="header">
+    <h2 id="storeTitleHeader">عوادم التيربو</h2>
+    <div>
+      <button class="btn-red" onclick="ringBell()">🔔 جرس</button>
+      <button class="btn-red" style="background:#00a884;color:#000;" onclick="startCall()">📞 اتصال</button>
+      <button class="btn-red" style="background:#555;" onclick="logout()">خروج</button>
+    </div>
+  </div>
+  <div class="marquee"><span id="marqueeDisplay">جاري تجهيز الطلبات - شحن سريع لجميع مناطق المملكة 🚚</span></div>
+  
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('chatTab', this)">الدردشة</div>
+    <div class="tab" onclick="switchTab('catalogTab', this)">الكتالوج</div>
+    <div class="tab hidden" id="ownerTabBtn" onclick="switchTab('ownerTab', this)">لوحة المالك</div>
+  </div>
+
+  <div id="chatTab">
+    <div id="offlineBanner" class="hidden" style="background:#b00020; text-align:center; padding:5px; font-size:12px;">جاري الاتصال... (لا يوجد اتصال بالإنترنت في هذه المحادثة)</div>
+    <div class="chat-box" id="chatBox"></div>
+    <div style="padding:10px; background:#1f2c34; display:flex; gap:6px; align-items:center;">
+      <button class="btn-dark" style="width:auto; padding:8px;" onclick="sendOneTime('🎤 تسجيل صوتي لمرة واحدة')">🎤</button>
+      <button class="btn-dark" style="width:auto; padding:8px;" onclick="sendOneTime('📷 صورة لمرة واحدة')">📷</button>
+      <input type="text" id="msgInput" placeholder="اكتب رسالتك هنا...">
+      <button class="btn-green" style="width:auto; padding:10px 15px;" onclick="sendMsg()">إرسال</button>
+    </div>
+  </div>
+
+  <div id="catalogTab" class="hidden">
+    <div class="card">
+      <h3>كتالوج المنتجات <span class="badge" id="seoBadge">SEO محدّث تلقائياً</span></h3>
+      <div id="productList"></div>
+      <div class="row" style="margin-top:15px;">
+        <button class="btn btn-dark" onclick="alert('فتح حساب إنستغرام المتجر')">إنستغرام (Instagram)</button>
+        <button class="btn btn-dark" onclick="alert('فتح حساب تيك توك المتجر')">تيك توك (TikTok)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ownerTab" class="hidden">
+    <div class="card">
+      <h3>إعدادات المتجر والخصوصية</h3>
+      <input type="text" id="newStoreName" placeholder="تعديل اسم المتجر">
+      <input type="text" id="newMarquee" placeholder="نص الشريط العلوي المتحرك (إحداثيات التجهيز)" style="margin-top:6px;">
+      <input type="text" id="bgUrl" placeholder="رابط صورة أو فيديو لخلفية المحادثة" style="margin-top:6px;">
+      <button class="btn btn-green" onclick="saveSettings()">حفظ الهوية والخلفية</button>
+      
+      <div class="row" style="margin-top:10px;">
+        <button class="btn btn-dark" id="netCutBtn" onclick="toggleNetCut()">قطع الإنترنت عن المحادثة: إيقاف</button>
+        <button class="btn btn-dark" id="secBtn" onclick="toggleSecurity()">منع التصوير والنسخ: مفعّل</button>
+      </div>
+      <div class="row">
+        <button class="btn btn-dark" id="aiBtn" onclick="toggleAI()">الرد الذكي للعملاء: مفعّل</button>
+        <select id="disappearMode" onchange="setDisappear()">
+          <option value="none">إخفاء الكلام: متوقف</option>
+          <option value="view">يختفي عند المشاهدة</option>
+          <option value="24h">يختفي بعد 24 ساعة</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>لوحة الأصوات والتنبيهات الفورية</h3>
+      <div class="sound-grid">
+        <button class="btn btn-dark" onclick="playAlert('تيربو ودراجة نارية 🏍️', 220)">🏍️ دراجة نارية / تيربو</button>
+        <button class="btn btn-dark" onclick="playAlert('مفرقعات وانفجار 🧨', 150)">🧨 مفرقعات</button>
+        <button class="btn btn-dark" onclick="playAlert('سارينة شرطة 🚨', 600)">🚨 سارينة شرطة</button>
+        <button class="btn btn-dark" onclick="playAlert('سقوط نقود 🪙', 900)">🪙 سقوط نقود</button>
+        <button class="btn btn-dark" onclick="playAlert('ترحيب شاب: هاي هالو 👋', 350)">👨 هاي هالو (شاب)</button>
+        <button class="btn btn-dark" onclick="playAlert('ترحيب فتاة: هاي هالو 👩', 520)">👩 هاي هالو (فتاة)</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>بوليصة الشحن اليدوية</h3>
+      <input type="text" id="shipName" placeholder="اسم العميل">
+      <input type="text" id="shipCity" placeholder="المدينة والعنوان" style="margin-top:6px;">
+      <input type="text" id="shipTrack" placeholder="شركة الشحن ورقم التتبع" style="margin-top:6px;">
+      <button class="btn btn-green" onclick="sendWaybill()">إرسال بوليصة الشحن للمحادثة</button>
+    </div>
+
+    <div class="card">
+      <h3>إضافة منتج للكتالوج</h3>
+      <input type="text" id="prodName" placeholder="اسم المنتج (مثال: دبة تلوث رياضية)">
+      <input type="text" id="prodPrice" placeholder="السعر بالريال السعودي (SAR)" style="margin-top:6px;">
+      <button class="btn btn-green" onclick="addProduct()">نشر المنتج</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let isOwner = false, netCut = false, aiEnabled = true, secEnabled = true;
+  let products = [{name: "دبة تلوث تيربو رياضية", price: "450 SAR"}, {name: "كتباك عادم رياضي كامل", price: "1200 SAR"}];
+  
+  function unlockAudio() { const ctx = new (window.AudioContext || window.webkitAudioContext)(); ctx.resume(); }
+  function loginUser() {
+    unlockAudio();
+    const pin = document.getElementById('pinInput').value;
+    if(pin === '6046') { isOwner = true; openApp(); }
+    else if(pin.length === 4) { isOwner = false; openApp(); }
+    else { alert('الرجاء إدخال الرمز السري المكون من 4 أرقام'); }
+  }
+  function enterAsClient() { unlockAudio(); isOwner = false; openApp(); }
+  function openApp() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    if(isOwner) document.getElementById('ownerTabBtn').classList.remove('hidden');
+    renderProducts();
+  }
+  function logout() { location.reload(); }
+  function switchTab(id, el) {
+    ['chatTab','catalogTab','ownerTab'].forEach(t => document.getElementById(t).classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+  function sendMsg() {
+    const inp = document.getElementById('msgInput');
+    if(!inp.value.trim()) return;
+    if(netCut && !isOwner) {
+      addChatBubble(inp.value + " 🕒 (معلّق)", "msg-out");
+      inp.value = ""; return;
+    }
+    addChatBubble(inp.value, "msg-out");
+    const userText = inp.value;
+    inp.value = "";
+    if(aiEnabled && !isOwner) {
+      setTimeout(() => {
+mkdir -p app/src/main/assets && cat << 'EOF' > app/src/main/assets/index.html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>عوادم التيربو - واتساب للأعمال</title>
+<style>
+  body { margin:0; font-family: Tahoma, Arial, sans-serif; background:#0b141a; color:#e9edef; user-select: none; }
+  .header { background:#1f2c34; padding:12px 15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2a3942; }
+  .header h2 { margin:0; font-size:18px; color:#00a884; }
+  .marquee { background:#005c4b; color:#fff; padding:6px; font-size:13px; overflow:hidden; white-space:nowrap; }
+  .marquee span { display:inline-block; animation: scroll 15s linear infinite; }
+  @keyframes scroll { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  .card { background:#1f2c34; margin:15px; padding:15px; border-radius:12px; border:1px solid #2a3942; }
+  .row { display:flex; gap:8px; margin-bottom:10px; }
+  input, select, textarea { width:100%; padding:10px; border-radius:8px; border:1px solid #2a3942; background:#2a3942; color:#fff; font-size:14px; box-sizing:border-box; }
+  .btn { width:100%; padding:12px; border:none; border-radius:8px; font-weight:bold; font-size:15px; cursor:pointer; margin-top:6px; }
+  .btn-green { background:#00a884; color:#0b141a; }
+  .btn-dark { background:#2a3942; color:#00a884; border:1px solid #00a884; }
+  .btn-red { background:#ea4335; color:#fff; padding:6px 10px; font-size:12px; width:auto; border:none; border-radius:6px; }
+  .tabs { display:flex; background:#1f2c34; border-bottom:1px solid #2a3942; }
+  .tab { flex:1; text-align:center; padding:12px; cursor:pointer; color:#8696a0; font-weight:bold; }
+  .tab.active { color:#00a884; border-bottom:3px solid #00a884; }
+  .chat-box { height:300px; overflow-y:auto; padding:15px; background-size:cover; background-position:center; display:flex; flex-direction:column; gap:8px; }
+  .msg { max-width:80%; padding:10px; border-radius:10px; font-size:14px; }
+  .msg-in { background:#202c33; align-self:flex-start; }
+  .msg-out { background:#005c4b; align-self:flex-end; }
+  .hidden { display:none; }
+  .sound-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+  .badge { background:#00a884; color:#000; padding:2px 6px; border-radius:4px; font-size:11px; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="header"><h2 id="storeTitleLogin">عوادم التيربو</h2><span class="badge">واتساب للأعمال</span></div>
+  <div class="card" style="text-align:center;">
+    <p style="color:#8696a0; font-size:13px;">منصة واتساب للأعمال الخاصة بمتجرك: كتالوج المنتجات، دردشة مباشرة مع المتجر، وبوليصة شحن معتمدة.</p>
+    <div class="row">
+      <input type="tel" id="phoneInput" placeholder="رقم الجوال (+966)" style="flex:2;">
+      <input type="password" id="pinInput" maxlength="4" placeholder="الرمز السري (4 أرقام)" style="flex:1;">
+    </div>
+    <button class="btn btn-green" onclick="loginUser()">دخول المالك / المشترك</button>
+    <hr style="border-color:#2a3942; margin:15px 0;">
+    <button class="btn btn-dark" onclick="enterAsClient()">تصفح المتجر كعميل</button>
+  </div>
+</div>
+
+<div id="mainApp" class="hidden">
+  <div class="header">
+    <h2 id="storeTitleHeader">عوادم التيربو</h2>
+    <div>
+      <button class="btn-red" onclick="ringBell()">🔔 جرس</button>
+      <button class="btn-red" style="background:#00a884;color:#000;" onclick="startCall()">📞 اتصال</button>
+      <button class="btn-red" style="background:#555;" onclick="logout()">خروج</button>
+    </div>
+  </div>
+  <div class="marquee"><span id="marqueeDisplay">جاري تجهيز الطلبات - شحن سريع لجميع مناطق المملكة 🚚</span></div>
+  
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('chatTab', this)">الدردشة</div>
+    <div class="tab" onclick="switchTab('catalogTab', this)">الكتالوج</div>
+    <div class="tab hidden" id="ownerTabBtn" onclick="switchTab('ownerTab', this)">لوحة المالك</div>
+  </div>
+
+  <div id="chatTab">
+    <div id="offlineBanner" class="hidden" style="background:#b00020; text-align:center; padding:5px; font-size:12px;">جاري الاتصال... (لا يوجد اتصال بالإنترنت في هذه المحادثة)</div>
+    <div class="chat-box" id="chatBox"></div>
+    <div style="padding:10px; background:#1f2c34; display:flex; gap:6px; align-items:center;">
+      <button class="btn-dark" style="width:auto; padding:8px;" onclick="sendOneTime('🎤 تسجيل صوتي لمرة واحدة')">🎤</button>
+      <button class="btn-dark" style="width:auto; padding:8px;" onclick="sendOneTime('📷 صورة لمرة واحدة')">📷</button>
+      <input type="text" id="msgInput" placeholder="اكتب رسالتك هنا...">
+      <button class="btn-green" style="width:auto; padding:10px 15px;" onclick="sendMsg()">إرسال</button>
+    </div>
+  </div>
+
+  <div id="catalogTab" class="hidden">
+    <div class="card">
+      <h3>كتالوج المنتجات <span class="badge" id="seoBadge">SEO محدّث تلقائياً</span></h3>
+      <div id="productList"></div>
+      <div class="row" style="margin-top:15px;">
+        <button class="btn btn-dark" onclick="alert('فتح حساب إنستغرام المتجر')">إنستغرام (Instagram)</button>
+        <button class="btn btn-dark" onclick="alert('فتح حساب تيك توك المتجر')">تيك توك (TikTok)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ownerTab" class="hidden">
+    <div class="card">
+      <h3>إعدادات المتجر والخصوصية</h3>
+      <input type="text" id="newStoreName" placeholder="تعديل اسم المتجر">
+      <input type="text" id="newMarquee" placeholder="نص الشريط العلوي المتحرك (إحداثيات التجهيز)" style="margin-top:6px;">
+      <input type="text" id="bgUrl" placeholder="رابط صورة أو فيديو لخلفية المحادثة" style="margin-top:6px;">
+      <button class="btn btn-green" onclick="saveSettings()">حفظ الهوية والخلفية</button>
+      
+      <div class="row" style="margin-top:10px;">
+        <button class="btn btn-dark" id="netCutBtn" onclick="toggleNetCut()">قطع الإنترنت عن المحادثة: إيقاف</button>
+        <button class="btn btn-dark" id="secBtn" onclick="toggleSecurity()">منع التصوير والنسخ: مفعّل</button>
+      </div>
+      <div class="row">
+        <button class="btn btn-dark" id="aiBtn" onclick="toggleAI()">الرد الذكي للعملاء: مفعّل</button>
+        <select id="disappearMode">
+          <option value="none">إخفاء الكلام: متوقف</option>
+          <option value="view">يختفي عند المشاهدة</option>
+          <option value="24h">يختفي بعد 24 ساعة</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>لوحة الأصوات والتنبيهات الفورية</h3>
+      <div class="sound-grid">
+        <button class="btn btn-dark" onclick="playAlert('تيربو ودراجة نارية 🏍️', 220)">🏍️ دراجة نارية / تيربو</button>
+        <button class="btn btn-dark" onclick="playAlert('مفرقعات وانفجار 🧨', 150)">🧨 مفرقعات</button>
+        <button class="btn btn-dark" onclick="playAlert('سارينة شرطة 🚨', 600)">🚨 سارينة شرطة</button>
+        <button class="btn btn-dark" onclick="playAlert('سقوط نقود 🪙', 900)">🪙 سقوط نقود</button>
+        <button class="btn btn-dark" onclick="playAlert('ترحيب شاب: هاي هالو 👋', 350)">👨 هاي هالو (شاب)</button>
+        <button class="btn btn-dark" onclick="playAlert('ترحيب فتاة: هاي هالو 👩', 520)">👩 هاي هالو (فتاة)</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>بوليصة الشحن اليدوية</h3>
+      <input type="text" id="shipName" placeholder="اسم العميل">
+      <input type="text" id="shipCity" placeholder="المدينة والعنوان" style="margin-top:6px;">
+      <input type="text" id="shipTrack" placeholder="شركة الشحن ورقم التتبع" style="margin-top:6px;">
+      <button class="btn btn-green" onclick="sendWaybill()">إرسال بوليصة الشحن للمحادثة</button>
+    </div>
+
+    <div class="card">
+      <h3>إضافة منتج للكتالوج</h3>
+      <input type="text" id="prodName" placeholder="اسم المنتج (مثال: دبة تلوث رياضية)">
+      <input type="text" id="prodPrice" placeholder="السعر بالريال السعودي (SAR)" style="margin-top:6px;">
+      <button class="btn btn-green" onclick="addProduct()">نشر المنتج</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let isOwner = false, netCut = false, aiEnabled = true, secEnabled = true;
+  let products = [{name: "دبة تلوث تيربو رياضية", price: "450 SAR"}, {name: "كتباك عادم رياضي كامل", price: "1200 SAR"}];
+  
+  function unlockAudio() { try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); ctx.resume(); } catch(e){} }
+  function loginUser() {
+    unlockAudio();
+    const pin = document.getElementById('pinInput').value;
+    if(pin === '6046') { isOwner = true; openApp(); }
+    else if(pin.length === 4) { isOwner = false; openApp(); }
+    else { alert('الرجاء إدخال الرمز السري المكون من 4 أرقام'); }
+  }
+  function enterAsClient() { unlockAudio(); isOwner = false; openApp(); }
+  function openApp() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    if(isOwner) document.getElementById('ownerTabBtn').classList.remove('hidden');
+    renderProducts();
+  }
+  function logout() { location.reload(); }
+  function switchTab(id, el) {
+    ['chatTab','catalogTab','ownerTab'].forEach(t => document.getElementById(t).classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+  function sendMsg() {
+    const inp = document.getElementById('msgInput');
+    if(!inp.value.trim()) return;
+    if(netCut && !isOwner) { addChatBubble(inp.value + " 🕒 (معلّق)", "msg-out"); inp.value = ""; return; }
+    addChatBubble(inp.value, "msg-out");
+    inp.value = "";
+    if(aiEnabled && !isOwner) {
+      setTimeout(() => { addChatBubble("🤖 المساعد الذكي: أهلاً بك! متوفر لدينا " + products[0].name + " بسعر " + products[0].price + ". رابط المتجر المباشر: https://store.link", "msg-in"); }, 700);
+    }
+  }
+  function addChatBubble(text, cls) {
+mkdir -p app/src/main/java/com/example && cat << 'EOF' > app/src/main/java/com/example/MainActivity.kt
+package com.example
+
+import android.os.Bundle
+import android.view.WindowManager
+import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+        val webView = WebView(this)
+        webView.settings.javaScriptEnabled = true
+        webView.settings.domStorageEnabled = true
+        webView.settings.mediaPlaybackRequiresUserGesture = false
+        webView.webViewClient = WebViewClient()
+        webView.webChromeClient = WebChromeClient()
+        webView.addJavascriptInterface(object {
+            @JavascriptInterface
+            fun setSecure(enable: Boolean) {
+                runOnUiThread {
+                    if (enable) window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+                    else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                }
+            }
+        }, "AndroidBridge")
+        webView.loadUrl("file:///android_asset/index.html")
+        setContentView(webView)
+    }
+}
